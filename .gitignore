@@ -1,0 +1,6 @@
+./.direnv/**
+./.nix-channels/**
+./.nix-defexpr/**
+./.nix-profile/**
+./.nix-store/**
+./.nix-trust-keys/**
