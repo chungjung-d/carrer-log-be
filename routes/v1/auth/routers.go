@@ -13,4 +13,7 @@ func SetupRoutes(router fiber.Router) {
 
 	// Register route
 	auth.Post("/register", authService.HandleRegister())
+
+	// Login route
+	auth.Post("/login", authService.HandleLogin())
 }

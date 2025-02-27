@@ -20,7 +20,6 @@ type User struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-// BeforeCreate will set custom ID
 func (user *User) BeforeCreate(tx *gorm.DB) error {
 	user.ID = utils.GenerateID(UserPrefix)
 	return nil
