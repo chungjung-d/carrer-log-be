@@ -1,10 +1,12 @@
 package auth
 
 import (
+	appErrors "career-log-be/errors"
 	"career-log-be/models"
 	"career-log-be/utils/jwt"
 	"errors"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -30,17 +32,20 @@ func HandleLogin() fiber.Handler {
 		input := new(LoginInput)
 
 		if err := c.BodyParser(input); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Invalid input",
-			})
+			return appErrors.NewBadRequestError(
+				appErrors.ErrorCodeInvalidInput,
+				"Invalid request body",
+			)
 		}
 
 		// Validate input
 		if err := validate.Struct(input); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error":   "Validation failed",
-				"details": err.Error(),
-			})
+			validationErrors := err.(validator.ValidationErrors)
+			return appErrors.NewValidationError(
+				appErrors.ErrorCodeInvalidInput,
+				"Validation failed",
+				validationErrors.Error(),
+			)
 		}
 
 		// 사용자 찾기
@@ -48,28 +53,34 @@ func HandleLogin() fiber.Handler {
 		result := db.Where("email = ?", input.Email).First(&user)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-					"error": "Invalid credentials",
-				})
+				return appErrors.NewAuthorizationError(
+					appErrors.ErrorCodeInvalidCredentials,
+					"Invalid email or password",
+				)
 			}
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Database error",
-			})
+			return appErrors.NewInternalError(
+				appErrors.ErrorCodeDatabaseError,
+				"Failed to query database",
+				result.Error,
+			)
 		}
 
 		// 비밀번호 확인
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid credentials",
-			})
+			return appErrors.NewAuthorizationError(
+				appErrors.ErrorCodeInvalidCredentials,
+				"Invalid email or password",
+			)
 		}
 
 		// JWT 토큰 생성
 		token, err := jwtUtils.GenerateToken(user.ID, user.Email)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Could not generate token",
-			})
+			return appErrors.NewInternalError(
+				appErrors.ErrorCodeInternalError,
+				"Could not generate token",
+				err,
+			)
 		}
 
 		// 응답 생성

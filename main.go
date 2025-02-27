@@ -42,8 +42,10 @@ func initialize() (*fiber.App, *AppContext, error) {
 		return nil, nil, fmt.Errorf("could not migrate database: %v", err)
 	}
 
-	// Fiber 앱 생성
-	app := fiber.New()
+	// Fiber 앱 생성 (에러 핸들러 등록)
+	app := fiber.New(fiber.Config{
+		ErrorHandler: middleware.ErrorHandler(),
+	})
 
 	// 컨텍스트 생성
 	appCtx := &AppContext{

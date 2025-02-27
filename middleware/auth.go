@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	appErrors "career-log-be/errors"
 	"career-log-be/utils/jwt"
 	"strings"
 
@@ -16,17 +17,19 @@ func AuthMiddleware() fiber.Handler {
 		// Get token from Authorization header
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Authorization header is required",
-			})
+			return appErrors.NewAuthorizationError(
+				appErrors.ErrorCodeTokenRequired,
+				"Authorization header is required",
+			)
 		}
 
 		// Check if the header has the Bearer prefix
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid authorization header format",
-			})
+			return appErrors.NewAuthorizationError(
+				appErrors.ErrorCodeInvalidToken,
+				"Invalid authorization header format",
+			)
 		}
 
 		tokenString := parts[1]
@@ -34,9 +37,10 @@ func AuthMiddleware() fiber.Handler {
 		// Validate token and get claims
 		claims, err := jwtUtils.ValidateToken(tokenString)
 		if err != nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Invalid or expired token",
-			})
+			return appErrors.NewAuthorizationError(
+				appErrors.ErrorCodeInvalidToken,
+				"Invalid or expired token",
+			)
 		}
 
 		// Set user information in context
