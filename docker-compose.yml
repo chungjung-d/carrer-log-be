@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: career_log_postgres
+    environment:
+      POSTGRES_USER: career_log
+      POSTGRES_PASSWORD: career_log_password
+      POSTGRES_DB: career_log_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data: 
