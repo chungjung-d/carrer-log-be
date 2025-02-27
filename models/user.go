@@ -1,23 +1,27 @@
 package models
 
 import (
+	"career-log-be/utils"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
+const (
+	UserPrefix = "USR"
+)
+
 type User struct {
-	UUID      uuid.UUID `gorm:"type:uuid;primary_key;"`
-	Email     string    `gorm:"uniqueIndex;not null"`
-	Password  string    `gorm:"not null"`
+	ID        string `gorm:"primaryKey;type:varchar(100)"`
+	Email     string `gorm:"uniqueIndex;not null"`
+	Password  string `gorm:"not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-// BeforeCreate will set a UUID rather than numeric ID.
+// BeforeCreate will set custom ID
 func (user *User) BeforeCreate(tx *gorm.DB) error {
-	user.UUID = uuid.New()
+	user.ID = utils.GenerateID(UserPrefix)
 	return nil
 }

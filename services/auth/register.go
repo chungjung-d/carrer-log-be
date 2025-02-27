@@ -73,7 +73,7 @@ func HandleRegister() fiber.Handler {
 
 		// 응답에서 비밀번호 제외
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"uuid":  user.UUID,
+			"id":    user.ID,
 			"email": user.Email,
 		})
 	}
