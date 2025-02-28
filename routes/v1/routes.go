@@ -2,6 +2,7 @@ package v1
 
 import (
 	"career-log-be/routes/v1/auth"
+	"career-log-be/routes/v1/user"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -11,4 +12,7 @@ func SetupRoutes(router fiber.Router) {
 
 	// Setup auth routes
 	auth.SetupRoutes(v1)
+
+	// Setup user routes
+	user.SetupRoutes(v1)
 }
