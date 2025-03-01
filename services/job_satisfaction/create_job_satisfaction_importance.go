@@ -1,4 +1,4 @@
-package user
+package job_satisfaction
 
 import (
 	appErrors "career-log-be/errors"
@@ -31,8 +31,8 @@ func HandleCreateJobSatisfactionImportance() fiber.Handler {
 				"Invalid request body",
 			)
 		}
-
 		// 입력값 검증
+		validate := validator.New()
 		if err := validate.Struct(input); err != nil {
 			validationErrors := err.(validator.ValidationErrors)
 			return appErrors.NewValidationError(
@@ -60,7 +60,7 @@ func HandleCreateJobSatisfactionImportance() fiber.Handler {
 
 		// 새 직무 만족도 중요도 생성
 		jobSatisfactionImportance := models.UserJobSatisfactionImportance{
-			ID:                userID,
+			UserID:            userID,
 			Workload:          input.Workload,
 			Compensation:      input.Compensation,
 			Growth:            input.Growth,
