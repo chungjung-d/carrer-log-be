@@ -16,6 +16,9 @@ func SetupRoutes(router fiber.Router) {
 	// 프로필 생성
 	protected.Post("/profile", user.HandleCreateUserProfile())
 
+	// 직무 만족도 중요도 생성
+	protected.Post("/job-satisfaction-importance", user.HandleCreateJobSatisfactionImportance())
+
 	// // 프로필 조회
 	// protected.Get("/profile", userService.HandleGetProfile())
 

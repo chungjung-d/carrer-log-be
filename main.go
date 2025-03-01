@@ -38,7 +38,7 @@ func initialize() (*fiber.App, *AppContext, error) {
 	}
 
 	// Auto Migrate
-	if err := db.AutoMigrate(&models.User{}, &models.UserProfile{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.UserProfile{}, &models.UserJobSatisfactionImportance{}); err != nil {
 		return nil, nil, fmt.Errorf("could not migrate database: %v", err)
 	}
 
