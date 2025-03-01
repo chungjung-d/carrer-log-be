@@ -129,10 +129,7 @@ func GenerateID(prefix string) string {
 
 ## API 엔드포인트
 
-### 인증 API
-
-- **POST /api/v1/auth/register**: 새 사용자 등록
-- **POST /api/v1/auth/login**: 사용자 로그인 및 JWT 토큰 발급
+API 명세에 대한 자세한 내용은 [API 문서](docs/API.md)를 참조하세요.
 
 ## 설치 및 실행
 
@@ -206,22 +203,27 @@ if err != nil {
 
 ### 핸들러 구조
 
-각 API 엔드포인트는 독립적인 파일에 구현됩니다. 1핸들러당 1파일 원칙을 따릅니다:
+프로젝트는 도메인 중심의 구조를 따르며, 라우터와 핸들러를 명확하게 분리합니다:
 
-```
+#### 라우터-서비스 구조
+```go
 routes/
 └── v1/
+    ├── routes.go          # 메인 라우터 설정
     ├── auth/
-    │   ├── login.go        # 로그인 핸들러
-    │   └── register.go     # 회원가입 핸들러
-    ├── user_profile/
-    │   ├── create.go       # 프로필 생성 핸들러
-    │   ├── get.go          # 프로필 조회 핸들러
-    │   └── routes.go       # 라우트 설정
-    └── ...
+    │   └── routers.go     # 인증 관련 라우터 그룹
+    └── user/
+        └── routers.go     # 사용자 관련 라우터 그룹
+
+services/
+└── user/
+    ├── create_job_satisfaction_importance.go  # 직무 만족도 중요도 생성 핸들러
+    └── create_user_profile.go                 # 사용자 프로필 생성 핸들러
 ```
 
-이 구조는 코드의 가독성과 유지보수성을 향상시키며, 각 핸들러의 책임을 명확하게 분리합니다.
+- 각 도메인별로 라우터를 그룹화하여 `routes/v1/{도메인}/routers.go` 파일에서 관리
+- 각 라우터에 연결되는 핸들러는 `services/{도메인}` 디렉토리에서 1핸들러 1파일 원칙으로 관리
+- 이를 통해 코드의 관심사 분리와 유지보수성 향상
 
 ## 라이센스
 
