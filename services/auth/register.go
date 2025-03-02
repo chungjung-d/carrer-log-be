@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"career-log-be/models"
+	"career-log-be/models/user"
 	"errors"
 
 	"github.com/go-playground/validator/v10"
@@ -39,7 +39,7 @@ func HandleRegister() fiber.Handler {
 		}
 
 		// 이메일 중복 체크
-		var existingUser models.User
+		var existingUser user.User
 		result := db.Where("email = ?", input.Email).First(&existingUser)
 		if result.Error == nil {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
@@ -60,7 +60,7 @@ func HandleRegister() fiber.Handler {
 		}
 
 		// 새 사용자 생성
-		user := &models.User{
+		user := &user.User{
 			Email:    input.Email,
 			Password: string(hashedPassword),
 		}

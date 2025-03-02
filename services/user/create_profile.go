@@ -2,7 +2,7 @@ package user
 
 import (
 	appErrors "career-log-be/errors"
-	"career-log-be/models"
+	user "career-log-be/models/user"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -42,7 +42,7 @@ func HandleCreateUserProfile() fiber.Handler {
 		}
 
 		// 이미 프로필이 존재하는지 확인
-		var existingProfile models.UserProfile
+		var existingProfile user.UserProfile
 		result := db.Where("id = ?", userID).First(&existingProfile)
 		if result.Error == nil {
 			return appErrors.NewBadRequestError(
@@ -58,7 +58,7 @@ func HandleCreateUserProfile() fiber.Handler {
 		}
 
 		// 새 프로필 생성
-		userProfile := models.UserProfile{
+		userProfile := user.UserProfile{
 			ID:           userID,
 			Name:         input.Name,
 			Nickname:     input.Nickname,

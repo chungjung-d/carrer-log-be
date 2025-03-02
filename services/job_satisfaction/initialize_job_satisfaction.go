@@ -3,6 +3,8 @@ package job_satisfaction
 import (
 	appErrors "career-log-be/errors"
 	job_satisfaction "career-log-be/models/job_satisfaction"
+	enums "career-log-be/models/job_satisfaction/enums"
+	satisfaction "career-log-be/services/job_satisfaction/core/event"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -10,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type CreateJobSatisfactionImportanceInput struct {
+type InitializeJobSatisfactionInput struct {
 	Workload          int `json:"workload" validate:"required,min=0,max=100"`
 	Compensation      int `json:"compensation" validate:"required,min=0,max=100"`
 	Growth            int `json:"growth" validate:"required,min=0,max=100"`
@@ -19,11 +21,11 @@ type CreateJobSatisfactionImportanceInput struct {
 	WorkValues        int `json:"workValues" validate:"required,min=0,max=100"`
 }
 
-func HandleCreateJobSatisfactionImportance() fiber.Handler {
+func HandleInitializeJobSatisfaction() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		db := c.Locals("db").(*gorm.DB)
 		userID := c.Locals("userID").(string)
-		input := new(CreateJobSatisfactionImportanceInput)
+		input := new(InitializeJobSatisfactionInput)
 
 		if err := c.BodyParser(input); err != nil {
 			return appErrors.NewBadRequestError(
@@ -31,7 +33,7 @@ func HandleCreateJobSatisfactionImportance() fiber.Handler {
 				"Invalid request body",
 			)
 		}
-		// 입력값 검증
+
 		validate := validator.New()
 		if err := validate.Struct(input); err != nil {
 			validationErrors := err.(validator.ValidationErrors)
@@ -42,13 +44,13 @@ func HandleCreateJobSatisfactionImportance() fiber.Handler {
 			)
 		}
 
-		// 이미 직무 만족도 중요도가 존재하는지 확인
-		var existingImportance job_satisfaction.UserJobSatisfactionImportance
-		result := db.Where("id = ?", userID).First(&existingImportance)
+		// 이미 직무 만족도가 존재하는지 확인
+		var existingSatisfaction job_satisfaction.UserJobSatisfaction
+		result := db.Where("user_id = ?", userID).First(&existingSatisfaction)
 		if result.Error == nil {
 			return appErrors.NewBadRequestError(
 				appErrors.ErrorCodeResourceExists,
-				"Job satisfaction importance already exists",
+				"Job satisfaction already exists",
 			)
 		} else if result.Error != gorm.ErrRecordNotFound {
 			return appErrors.NewInternalError(
@@ -58,8 +60,8 @@ func HandleCreateJobSatisfactionImportance() fiber.Handler {
 			)
 		}
 
-		// 새 직무 만족도 중요도 생성
-		jobSatisfactionImportance := job_satisfaction.UserJobSatisfactionImportance{
+		// 이벤트 생성
+		updateEvent := &job_satisfaction.JobSatisfactionUpdateEvent{
 			UserID:            userID,
 			Workload:          input.Workload,
 			Compensation:      input.Compensation,
@@ -67,21 +69,16 @@ func HandleCreateJobSatisfactionImportance() fiber.Handler {
 			WorkEnvironment:   input.WorkEnvironment,
 			WorkRelationships: input.WorkRelationships,
 			WorkValues:        input.WorkValues,
+			EventType:         enums.InitEvent,
 			CreatedAt:         time.Now(),
-			UpdatedAt:         time.Now(),
 		}
 
-		if err := db.Create(&jobSatisfactionImportance).Error; err != nil {
-			return appErrors.NewInternalError(
-				appErrors.ErrorCodeDatabaseError,
-				"Failed to create job satisfaction importance",
-				err,
-			)
-		}
+		// 비동기적으로 이벤트 처리
+		satisfaction.PublishJobSatisfactionUpdateEvent(db, updateEvent)
 
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
 			"success": true,
-			"data":    jobSatisfactionImportance,
+			"message": "Job satisfaction initialization request has been accepted",
 		})
 	}
 }

@@ -14,5 +14,8 @@ func SetupRoutes(router fiber.Router) {
 	protected := jobSatisfactionRouter.Use(middleware.AuthMiddleware())
 
 	// 직무 만족도 중요도 생성
-	protected.Post("/job-satisfaction/importance", job_satisfaction.HandleCreateJobSatisfactionImportance())
+	protected.Post("/importance", job_satisfaction.HandleCreateJobSatisfactionImportance())
+
+	// 직무 만족도 초기화
+	protected.Post("/init", job_satisfaction.HandleInitializeJobSatisfaction())
 }

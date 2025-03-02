@@ -2,7 +2,7 @@ package auth
 
 import (
 	appErrors "career-log-be/errors"
-	"career-log-be/models"
+	"career-log-be/models/user"
 	"career-log-be/utils/jwt"
 	"errors"
 
@@ -49,7 +49,7 @@ func HandleLogin() fiber.Handler {
 		}
 
 		// 사용자 찾기
-		var user models.User
+		var user user.User
 		result := db.Where("email = ?", input.Email).First(&user)
 		if result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {

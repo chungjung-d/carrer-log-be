@@ -1,4 +1,4 @@
-package models
+package job_satisfaction
 
 import (
 	"career-log-be/utils"

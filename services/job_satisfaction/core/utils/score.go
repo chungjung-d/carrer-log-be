@@ -1,8 +1,9 @@
 package satisfaction
 
 import (
-	"career-log-be/models"
 	"math"
+
+	job_satisfaction "career-log-be/models/job_satisfaction"
 )
 
 // 로지스틱 함수 상수
@@ -17,7 +18,7 @@ const (
 
 // CalculateWeightedScore는 만족도와 중요도를 가중하여 점수를 계산합니다.
 // sum{ (중요도/100)*(만족도/100) } / sum(중요도/100) * 100
-func CalculateWeightedScore(satisfaction *models.UserJobSatisfaction) float64 {
+func CalculateWeightedScore(satisfaction *job_satisfaction.UserJobSatisfaction) float64 {
 	// 각 항목별 가중 점수 계산
 	weightedSum := 0.0
 	importanceSum := 0.0
