@@ -128,6 +128,36 @@
   }
   ```
 
+### 현재 직무 만족도 조회
+- **엔드포인트**: `GET /api/v1/job-satisfaction/current`
+- **설명**: 현재 사용자의 직무 만족도 상태를 조회합니다.
+- **인증 필요**: 예
+- **헤더**:
+  ```
+  Authorization: Bearer {JWT_TOKEN}
+  ```
+- **응답**:
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "workload": 0,
+      "compensation": 0,
+      "growth": 0,
+      "workEnvironment": 0,
+      "workRelationships": 0,
+      "workValues": 0
+    }
+  }
+  ```
+- **에러 응답**:
+  ```json
+  {
+    "status": "error",
+    "message": "직무 만족도 정보를 찾을 수 없습니다"
+  }
+  ```
+
 ## 에러 응답
 모든 API 엔드포인트는 에러 발생 시 다음과 같은 형식으로 응답합니다:
 ```json

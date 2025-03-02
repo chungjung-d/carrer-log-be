@@ -18,4 +18,7 @@ func SetupRoutes(router fiber.Router) {
 
 	// 직무 만족도 초기화
 	protected.Post("/init", job_satisfaction.HandleInitializeJobSatisfaction())
+
+	// 현재 직무 만족도 조회
+	protected.Get("/current", job_satisfaction.HandleGetCurrentJobSatisfaction())
 }
