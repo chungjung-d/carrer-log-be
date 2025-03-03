@@ -23,42 +23,40 @@ func ConstrainRange(value int) int {
 
 // ProcessSatisfactionUpdate는 만족도 변경 이벤트를 처리하고 현재 만족도를 업데이트합니다.
 func ProcessSatisfactionUpdate(db *gorm.DB, event *job_satisfaction.JobSatisfactionUpdateEvent) error {
-	// 트랜잭션 시작
 	tx := db.Begin()
 	if tx.Error != nil {
 		return errors.NewInternalError(errors.ErrorCodeDatabaseError, "트랜잭션을 시작할 수 없습니다", tx.Error)
 	}
 
-	// 롤백 함수
+	// 트랜잭션 자동 관리
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
 		}
 	}()
 
-	// 사용자 만족도 조회
+	// 사용자 만족도 객체 준비
 	var satisfaction job_satisfaction.UserJobSatisfaction
-	result := tx.Where("user_id = ?", event.UserID).First(&satisfaction)
 
-	if event.EventType != enums.InitEvent {
+	// 이벤트 타입에 따른 처리
+	if event.EventType == enums.InitEvent {
+		// 초기화 이벤트인 경우 새 객체 생성
+		satisfaction = job_satisfaction.UserJobSatisfaction{
+			UserID: event.UserID,
+		}
+	} else {
+		// 업데이트 이벤트인 경우 기존 데이터 조회
+		result := tx.Where("user_id = ?", event.UserID).First(&satisfaction)
 		if result.Error != nil {
+			tx.Rollback()
 			if result.Error == gorm.ErrRecordNotFound {
-
-				tx.Rollback()
 				return errors.NewNotFoundError(errors.ErrorCodeResourceNotFound, "사용자 만족도가 초기화되지 않았습니다")
 			}
-			tx.Rollback()
 			return errors.NewInternalError(errors.ErrorCodeDatabaseError, "사용자 만족도 조회 중 오류가 발생했습니다", result.Error)
 		}
 	}
 
-	if event.EventType == enums.InitEvent {
-		satisfaction = job_satisfaction.UserJobSatisfaction{
-			UserID: event.UserID,
-		}
-	}
-
-	// 만족도 업데이트
+	// 만족도 값 업데이트
 	satisfaction.Workload = ConstrainRange(satisfaction.Workload + event.Workload)
 	satisfaction.Compensation = ConstrainRange(satisfaction.Compensation + event.Compensation)
 	satisfaction.Growth = ConstrainRange(satisfaction.Growth + event.Growth)
@@ -66,7 +64,7 @@ func ProcessSatisfactionUpdate(db *gorm.DB, event *job_satisfaction.JobSatisfact
 	satisfaction.WorkRelationships = ConstrainRange(satisfaction.WorkRelationships + event.WorkRelationships)
 	satisfaction.WorkValues = ConstrainRange(satisfaction.WorkValues + event.WorkValues)
 
-	// 중요도 값 업데이트
+	// 중요도 값 조회 및 설정
 	var importance job_satisfaction.UserJobSatisfactionImportance
 	if err := tx.Where("user_id = ?", event.UserID).First(&importance).Error; err == nil {
 		satisfaction.WorkloadImportance = importance.Workload
@@ -79,24 +77,26 @@ func ProcessSatisfactionUpdate(db *gorm.DB, event *job_satisfaction.JobSatisfact
 
 	satisfaction.UpdatedAt = time.Now()
 
+	// 데이터베이스 저장 또는 업데이트
+	var err error
+	if event.EventType == enums.InitEvent {
+		err = tx.Create(&satisfaction).Error
+	} else {
+		err = tx.Save(&satisfaction).Error
+	}
+
+	if err != nil {
+		tx.Rollback()
+		return errors.NewInternalError(errors.ErrorCodeDatabaseError, "사용자 만족도 저장 중 오류가 발생했습니다", err)
+	}
+
 	// 이벤트 저장
 	if err := tx.Create(event).Error; err != nil {
 		tx.Rollback()
 		return errors.NewInternalError(errors.ErrorCodeDatabaseError, "이벤트 저장 중 오류가 발생했습니다", err)
 	}
 
-	// 만족도 업데이트
-	if err := tx.Save(&satisfaction).Error; err != nil {
-		tx.Rollback()
-		return errors.NewInternalError(errors.ErrorCodeDatabaseError, "만족도 업데이트 중 오류가 발생했습니다", err)
-	}
-
-	// 트랜잭션 커밋
-	if err := tx.Commit().Error; err != nil {
-		return errors.NewInternalError(errors.ErrorCodeDatabaseError, "트랜잭션 커밋 중 오류가 발생했습니다", err)
-	}
-
-	return nil
+	return tx.Commit().Error
 }
 
 // PublishJobSatisfactionUpdateEvent는 만족도 업데이트 이벤트를 비동기적으로 처리합니다.
