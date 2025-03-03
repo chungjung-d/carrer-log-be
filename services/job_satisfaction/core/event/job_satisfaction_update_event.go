@@ -40,20 +40,22 @@ func ProcessSatisfactionUpdate(db *gorm.DB, event *job_satisfaction.JobSatisfact
 	var satisfaction job_satisfaction.UserJobSatisfaction
 	result := tx.Where("user_id = ?", event.UserID).First(&satisfaction)
 
-	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
-			if event.EventType == enums.InitEvent {
-				satisfaction = job_satisfaction.UserJobSatisfaction{
-					UserID: event.UserID,
-				}
-			} else {
+	if event.EventType != enums.InitEvent {
+		if result.Error != nil {
+			if result.Error == gorm.ErrRecordNotFound {
+
 				tx.Rollback()
 				return errors.NewNotFoundError(errors.ErrorCodeResourceNotFound, "사용자 만족도가 초기화되지 않았습니다")
 			}
-
+			tx.Rollback()
+			return errors.NewInternalError(errors.ErrorCodeDatabaseError, "사용자 만족도 조회 중 오류가 발생했습니다", result.Error)
 		}
-		tx.Rollback()
-		return errors.NewInternalError(errors.ErrorCodeDatabaseError, "사용자 만족도 조회 중 오류가 발생했습니다", result.Error)
+	}
+
+	if event.EventType == enums.InitEvent {
+		satisfaction = job_satisfaction.UserJobSatisfaction{
+			UserID: event.UserID,
+		}
 	}
 
 	// 만족도 업데이트

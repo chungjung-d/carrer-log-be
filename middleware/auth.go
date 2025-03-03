@@ -44,7 +44,7 @@ func AuthMiddleware() fiber.Handler {
 		}
 
 		// Set user information in context
-		c.Locals("userId", claims.ID)
+		c.Locals("userID", claims.ID)
 		c.Locals("userEmail", claims.Email)
 
 		return c.Next()

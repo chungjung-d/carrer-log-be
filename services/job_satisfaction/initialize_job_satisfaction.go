@@ -24,7 +24,7 @@ type InitializeJobSatisfactionInput struct {
 func HandleInitializeJobSatisfaction() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		db := c.Locals("db").(*gorm.DB)
-		userID := c.Locals("userId").(string)
+		userID := c.Locals("userID").(string)
 		input := new(InitializeJobSatisfactionInput)
 
 		if err := c.BodyParser(input); err != nil {
