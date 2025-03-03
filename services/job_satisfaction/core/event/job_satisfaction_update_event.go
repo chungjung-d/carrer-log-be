@@ -65,6 +65,18 @@ func ProcessSatisfactionUpdate(db *gorm.DB, event *job_satisfaction.JobSatisfact
 	satisfaction.WorkEnvironment = ConstrainRange(satisfaction.WorkEnvironment + event.WorkEnvironment)
 	satisfaction.WorkRelationships = ConstrainRange(satisfaction.WorkRelationships + event.WorkRelationships)
 	satisfaction.WorkValues = ConstrainRange(satisfaction.WorkValues + event.WorkValues)
+
+	// 중요도 값 업데이트
+	var importance job_satisfaction.UserJobSatisfactionImportance
+	if err := tx.Where("user_id = ?", event.UserID).First(&importance).Error; err == nil {
+		satisfaction.WorkloadImportance = importance.Workload
+		satisfaction.CompensationImportance = importance.Compensation
+		satisfaction.GrowthImportance = importance.Growth
+		satisfaction.WorkEnvironmentImportance = importance.WorkEnvironment
+		satisfaction.WorkRelationshipsImportance = importance.WorkRelationships
+		satisfaction.WorkValuesImportance = importance.WorkValues
+	}
+
 	satisfaction.UpdatedAt = time.Now()
 
 	// 이벤트 저장
