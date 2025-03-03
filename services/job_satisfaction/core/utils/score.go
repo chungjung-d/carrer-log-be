@@ -1,4 +1,4 @@
-package satisfaction
+package utils
 
 import (
 	"math"

@@ -3,6 +3,7 @@ package job_satisfaction
 import (
 	appErrors "career-log-be/errors"
 	"career-log-be/models/job_satisfaction"
+	utils "career-log-be/services/job_satisfaction/core/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -15,6 +16,15 @@ type CurrentJobSatisfactionResponse struct {
 	WorkEnvironment   int `json:"workEnvironment"`
 	WorkRelationships int `json:"workRelationships"`
 	WorkValues        int `json:"workValues"`
+
+	WorkloadImportance          int `json:"workloadImportance"`
+	CompensationImportance      int `json:"compensationImportance"`
+	GrowthImportance            int `json:"growthImportance"`
+	WorkEnvironmentImportance   int `json:"workEnvironmentImportance"`
+	WorkRelationshipsImportance int `json:"workRelationshipsImportance"`
+	WorkValuesImportance        int `json:"workValuesImportance"`
+
+	Score float64 `json:"score"`
 }
 
 // HandleGetCurrentJobSatisfaction는 현재 사용자의 직무 만족도를 조회하는 핸들러입니다
@@ -40,6 +50,8 @@ func HandleGetCurrentJobSatisfaction() fiber.Handler {
 			)
 		}
 
+		score := utils.CalculateWeightedScore(&satisfaction)
+
 		resp := CurrentJobSatisfactionResponse{
 			Workload:          satisfaction.Workload,
 			Compensation:      satisfaction.Compensation,
@@ -47,6 +59,15 @@ func HandleGetCurrentJobSatisfaction() fiber.Handler {
 			WorkEnvironment:   satisfaction.WorkEnvironment,
 			WorkRelationships: satisfaction.WorkRelationships,
 			WorkValues:        satisfaction.WorkValues,
+
+			WorkloadImportance:          satisfaction.WorkloadImportance,
+			CompensationImportance:      satisfaction.CompensationImportance,
+			GrowthImportance:            satisfaction.GrowthImportance,
+			WorkEnvironmentImportance:   satisfaction.WorkEnvironmentImportance,
+			WorkRelationshipsImportance: satisfaction.WorkRelationshipsImportance,
+			WorkValuesImportance:        satisfaction.WorkValuesImportance,
+
+			Score: score,
 		}
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{

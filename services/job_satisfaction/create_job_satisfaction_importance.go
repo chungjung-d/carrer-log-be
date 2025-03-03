@@ -22,7 +22,7 @@ type CreateJobSatisfactionImportanceInput struct {
 func HandleCreateJobSatisfactionImportance() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		db := c.Locals("db").(*gorm.DB)
-		userID := c.Locals("userID").(string)
+		userID := c.Locals("userId").(string)
 		input := new(CreateJobSatisfactionImportanceInput)
 
 		if err := c.BodyParser(input); err != nil {

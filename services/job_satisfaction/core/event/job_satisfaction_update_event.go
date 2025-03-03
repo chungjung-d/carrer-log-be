@@ -3,6 +3,7 @@ package event
 import (
 	"career-log-be/errors"
 	job_satisfaction "career-log-be/models/job_satisfaction"
+	"career-log-be/models/job_satisfaction/enums"
 	"log"
 	"time"
 
@@ -41,8 +42,15 @@ func ProcessSatisfactionUpdate(db *gorm.DB, event *job_satisfaction.JobSatisfact
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			tx.Rollback()
-			return errors.NewNotFoundError(errors.ErrorCodeResourceNotFound, "사용자 만족도가 초기화되지 않았습니다")
+			if event.EventType == enums.InitEvent {
+				satisfaction = job_satisfaction.UserJobSatisfaction{
+					UserID: event.UserID,
+				}
+			} else {
+				tx.Rollback()
+				return errors.NewNotFoundError(errors.ErrorCodeResourceNotFound, "사용자 만족도가 초기화되지 않았습니다")
+			}
+
 		}
 		tx.Rollback()
 		return errors.NewInternalError(errors.ErrorCodeDatabaseError, "사용자 만족도 조회 중 오류가 발생했습니다", result.Error)
