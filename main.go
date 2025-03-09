@@ -2,7 +2,6 @@ package main
 
 import (
 	"career-log-be/config/database"
-	"career-log-be/config/env/provider"
 	"career-log-be/middleware"
 	job_satisfaction "career-log-be/models/job_satisfaction"
 	user "career-log-be/models/user"
@@ -15,21 +14,23 @@ import (
 	"syscall"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
 
 type AppContext struct {
-	DB       *gorm.DB
-	JWT      *jwt.JWTUtils
-	Provider provider.EnvProvider
+	DB  *gorm.DB
+	JWT *jwt.JWTUtils
 }
 
 func initialize() (*fiber.App, *AppContext, error) {
-	// 환경 변수 제공자 초기화
-	envProvider := provider.NewDefaultEnvProvider()
+	// .env 파일 로드
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found")
+	}
 
 	// JWT 유틸리티 초기화
-	jwtUtils := jwt.NewJWTUtils(envProvider)
+	jwtUtils := jwt.NewJWTUtils()
 
 	// 데이터베이스 설정 및 연결
 	dbConfig := database.NewConfig()
@@ -50,9 +51,8 @@ func initialize() (*fiber.App, *AppContext, error) {
 
 	// 컨텍스트 생성
 	appCtx := &AppContext{
-		DB:       db,
-		JWT:      jwtUtils,
-		Provider: envProvider,
+		DB:  db,
+		JWT: jwtUtils,
 	}
 
 	// 미들웨어 설정
