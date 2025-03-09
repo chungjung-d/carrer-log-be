@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -21,11 +22,11 @@ type Config struct {
 // NewConfig returns default database configuration
 func NewConfig() Config {
 	return Config{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "career_log",
-		Password: "career_log_password",
-		DBName:   "career_log_db",
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		User:     os.Getenv("DB_USER"),
+		Password: os.Getenv("DB_PASSWORD"),
+		DBName:   os.Getenv("DB_NAME"),
 	}
 }
 

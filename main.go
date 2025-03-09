@@ -4,6 +4,7 @@ import (
 	"career-log-be/config/database"
 	"career-log-be/middleware"
 	job_satisfaction "career-log-be/models/job_satisfaction"
+	"career-log-be/models/note/chat"
 	user "career-log-be/models/user"
 	"career-log-be/routes"
 	"career-log-be/utils/jwt"
@@ -40,7 +41,14 @@ func initialize() (*fiber.App, *AppContext, error) {
 	}
 
 	// Auto Migrate
-	if err := db.AutoMigrate(&user.User{}, &user.UserProfile{}, &job_satisfaction.UserJobSatisfactionImportance{}, &job_satisfaction.UserJobSatisfaction{}, &job_satisfaction.JobSatisfactionUpdateEvent{}); err != nil {
+	if err := db.AutoMigrate(
+		&user.User{},
+		&user.UserProfile{},
+		&job_satisfaction.UserJobSatisfactionImportance{},
+		&job_satisfaction.UserJobSatisfaction{},
+		&job_satisfaction.JobSatisfactionUpdateEvent{},
+		&chat.ChatSet{},
+	); err != nil {
 		return nil, nil, fmt.Errorf("could not migrate database: %v", err)
 	}
 
