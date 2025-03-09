@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 
@@ -13,6 +12,14 @@ import (
 
 // ErrMissingAPIKey는 API 키가 없을 때 발생하는 에러입니다
 var ErrMissingAPIKey = errors.New("missing API key")
+
+// ChatGPTResponse는 ChatGPT로부터 받을 수 있는 구조화된 응답의 예시입니다
+type ChatGPTResponse struct {
+	Success    bool     `json:"success"`
+	Message    string   `json:"message"`
+	Confidence float64  `json:"confidence"`
+	Categories []string `json:"categories"`
+}
 
 // ChatGPTService는 ChatGPT API 서비스를 제공합니다
 type ChatGPTService struct {
@@ -26,23 +33,6 @@ func NewChatGPTService(client *openai.Client, config *types.ChatGPTConfig) *Chat
 		client: client,
 		config: config,
 	}
-}
-
-// CompleteChatRequestWithMessage는 특정 타입의 메시지를 처리하여 응답을 반환합니다
-func (s *ChatGPTService) CompleteChatRequestWithMessage(ctx context.Context, message types.CompletionMessage) (string, error) {
-	content, err := message.ToContent()
-	if err != nil {
-		return "", err
-	}
-
-	messages := []openai.ChatCompletionMessage{
-		{
-			Role:    openai.ChatMessageRoleUser,
-			Content: content,
-		},
-	}
-
-	return s.CompleteChatRequest(ctx, messages)
 }
 
 // CompleteChatRequest는 일반적인 채팅 완료 요청을 처리합니다
@@ -108,18 +98,41 @@ func (s *ChatGPTService) StreamChatRequest(ctx context.Context, messages []opena
 	return responseChan, errChan
 }
 
-// CompleteChatRequestWithType는 응답을 특정 타입으로 변환하여 반환합니다
-func CompleteChatRequestWithType[T any](s *ChatGPTService, ctx context.Context, messages []openai.ChatCompletionMessage) (T, error) {
-	var result T
-
+// CompleteChatRequestWithMessage는 특정 타입의 메시지를 처리하여 응답을 반환합니다
+func CompleteChatRequestWithMessage[T any](ctx context.Context, s *ChatGPTService, messages []openai.ChatCompletionMessage, parser func(string) (T, error)) (T, error) {
 	response, err := s.CompleteChatRequest(ctx, messages)
 	if err != nil {
-		return result, err
+		var zero T
+		return zero, err
 	}
 
-	if err := json.Unmarshal([]byte(response), &result); err != nil {
-		return result, errors.New("failed to parse response to specified type: " + err.Error())
-	}
-
-	return result, nil
+	return parser(response)
 }
+
+// 구조체 사용 예시:
+/*
+func ExampleStructureUsage() {
+	parser := func(response string) (ChatGPTResponse, error) {
+		var result ChatGPTResponse
+		if err := json.Unmarshal([]byte(response), &result); err != nil {
+			return ChatGPTResponse{}, err
+		}
+		return result, nil
+	}
+
+	messages := []openai.ChatCompletionMessage{
+		{
+			Role:    "user",
+			Content: "이 텍스트가 긍정적인가요? 응답을 JSON 형식으로 주세요: '오늘은 정말 좋은 날이에요!'",
+		},
+	}
+
+	result, err := CompleteChatRequestWithMessage(context.Background(), chatGPTService, messages, parser)
+	if err != nil {
+		// 에러 처리
+		return
+	}
+
+	// result.Success, result.Message 등의 필드 사용 가능
+}
+*/

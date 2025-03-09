@@ -8,8 +8,7 @@ import (
 )
 
 type (
-	CompletionMessage = types.CompletionMessage
-	ChatGPTConfig     = types.ChatGPTConfig
+	ChatGPTConfig = types.ChatGPTConfig
 )
 
 // Service는 ChatGPT 서비스의 인터페이스입니다
