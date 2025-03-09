@@ -5,6 +5,7 @@ import (
 	job_satisfaction "career-log-be/models/job_satisfaction"
 	enums "career-log-be/models/job_satisfaction/enums"
 	satisfaction "career-log-be/services/job_satisfaction/core/event"
+	"career-log-be/utils/response"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -76,9 +77,6 @@ func HandleInitializeJobSatisfaction() fiber.Handler {
 		// 비동기적으로 이벤트 처리
 		satisfaction.PublishJobSatisfactionUpdateEvent(db, updateEvent)
 
-		return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
-			"success": true,
-			"message": "Job satisfaction initialization request has been accepted",
-		})
+		return response.Accepted(c, "Job satisfaction initialization request has been accepted")
 	}
 }

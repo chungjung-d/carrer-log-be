@@ -4,6 +4,7 @@ import (
 	appErrors "career-log-be/errors"
 	"career-log-be/models/job_satisfaction"
 	utils "career-log-be/services/job_satisfaction/core/utils"
+	"career-log-be/utils/response"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -70,9 +71,6 @@ func HandleGetCurrentJobSatisfaction() fiber.Handler {
 			Score: score,
 		}
 
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success": true,
-			"data":    resp,
-		})
+		return response.Success(c, resp)
 	}
 }

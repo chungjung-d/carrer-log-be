@@ -4,6 +4,7 @@ import (
 	appErrors "career-log-be/errors"
 	"career-log-be/models/note/chat"
 	"career-log-be/models/note/chat/enums"
+	"career-log-be/utils/response"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -11,6 +12,10 @@ import (
 
 type CreateChatRequest struct {
 	PreChatID string `json:"pre_chat_id"`
+}
+
+type CreateChatResponse struct {
+	ID string `json:"id"`
 }
 
 func HandleCreateChat(c *fiber.Ctx) error {
@@ -63,7 +68,9 @@ func HandleCreateChat(c *fiber.Ctx) error {
 		)
 	}
 
-	return c.JSON(fiber.Map{
-		"id": chatSet.ID,
-	})
+	resp := CreateChatResponse{
+		ID: chatSet.ID,
+	}
+
+	return response.Created(c, resp)
 }

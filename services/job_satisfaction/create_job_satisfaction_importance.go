@@ -3,6 +3,7 @@ package job_satisfaction
 import (
 	appErrors "career-log-be/errors"
 	job_satisfaction "career-log-be/models/job_satisfaction"
+	"career-log-be/utils/response"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -79,9 +80,6 @@ func HandleCreateJobSatisfactionImportance() fiber.Handler {
 			)
 		}
 
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"success": true,
-			"data":    jobSatisfactionImportance,
-		})
+		return response.Created(c, jobSatisfactionImportance)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	appErrors "career-log-be/errors"
 	"career-log-be/models/user"
 	"career-log-be/utils/jwt"
+	"career-log-be/utils/response"
 	"errors"
 
 	"github.com/go-playground/validator/v10"
@@ -84,12 +85,14 @@ func HandleLogin() fiber.Handler {
 		}
 
 		// 응답 생성
-		response := LoginResponse{
+		resp := LoginResponse{
 			Token: token,
+			User: struct {
+				ID    string `json:"id"`
+				Email string `json:"email"`
+			}{ID: user.ID, Email: user.Email},
 		}
-		response.User.ID = user.ID
-		response.User.Email = user.Email
 
-		return c.Status(fiber.StatusOK).JSON(response)
+		return response.Success(c, resp)
 	}
 }

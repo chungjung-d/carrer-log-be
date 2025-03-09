@@ -3,6 +3,7 @@ package chat
 import (
 	appErrors "career-log-be/errors"
 	"career-log-be/models/note/chat"
+	"career-log-be/utils/response"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -47,8 +48,5 @@ func HandleGetChat(c *fiber.Ctx) error {
 		UpdatedAt: chatSet.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
-	return c.JSON(fiber.Map{
-		"success": true,
-		"data":    resp,
-	})
+	return response.Success(c, resp)
 }

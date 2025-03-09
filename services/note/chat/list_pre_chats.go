@@ -3,6 +3,7 @@ package chat
 import (
 	appErrors "career-log-be/errors"
 	"career-log-be/models/note/chat"
+	"career-log-be/utils/response"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -24,12 +25,9 @@ func HandleListPreChats(c *fiber.Ctx) error {
 		)
 	}
 
-	response := ListPreChatsResponse{
+	resp := ListPreChatsResponse{
 		PreChats: preChats,
 	}
 
-	return c.JSON(fiber.Map{
-		"success": true,
-		"data":    response,
-	})
+	return response.Success(c, resp)
 }

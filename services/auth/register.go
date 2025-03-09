@@ -1,7 +1,9 @@
 package auth
 
 import (
+	appErrors "career-log-be/errors"
 	"career-log-be/models/user"
+	"career-log-be/utils/response"
 	"errors"
 
 	"github.com/go-playground/validator/v10"
@@ -16,6 +18,20 @@ type RegisterInput struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
 }
+
+type RegisterResponse struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+}
+
+// if err := validate.Struct(input); err != nil {
+// 	validationErrors := err.(validator.ValidationErrors)
+// 	return appErrors.NewValidationError(
+// 		appErrors.ErrorCodeInvalidInput,
+// 		"Validation failed",
+// 		validationErrors.Error(),
+// 	)
+// }
 
 func HandleRegister() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -32,23 +48,28 @@ func HandleRegister() fiber.Handler {
 
 		// Validate the input
 		if err := validate.Struct(input); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error":   "Validation failed",
-				"details": err.Error(),
-			})
+			validationErrors := err.(validator.ValidationErrors)
+			return appErrors.NewValidationError(
+				appErrors.ErrorCodeInvalidInput,
+				"Validation failed",
+				validationErrors.Error(),
+			)
 		}
 
 		// 이메일 중복 체크
 		var existingUser user.User
 		result := db.Where("email = ?", input.Email).First(&existingUser)
 		if result.Error == nil {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": "Email already exists",
-			})
+			return appErrors.NewConflictError(
+				appErrors.ErrorCodeInvalidInput,
+				"Email already exists",
+			)
 		} else if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Database error",
-			})
+			return appErrors.NewInternalError(
+				appErrors.ErrorCodeDatabaseError,
+				"Database error",
+				result.Error,
+			)
 		}
 
 		// 비밀번호 해싱
@@ -72,9 +93,11 @@ func HandleRegister() fiber.Handler {
 		}
 
 		// 응답에서 비밀번호 제외
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"id":    user.ID,
-			"email": user.Email,
-		})
+		resp := RegisterResponse{
+			ID:    user.ID,
+			Email: user.Email,
+		}
+
+		return response.Created(c, resp)
 	}
 }
