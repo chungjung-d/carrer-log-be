@@ -11,6 +11,12 @@ func SetupRoutes(router fiber.Router) {
 	chatRouter := router.Group("/chat")
 	protected := chatRouter.Use(middleware.AuthMiddleware())
 
+	// Get all pre-chats
+	protected.Get("/pre-chats", chat.HandleListPreChats)
+
+	// Create new chat
+	protected.Post("/create", chat.HandleCreateChat)
+
 	// Get chat by ID
 	protected.Get("/:id", chat.HandleGetChat)
 
