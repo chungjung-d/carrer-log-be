@@ -5,6 +5,7 @@ import (
 	"career-log-be/models/note/chat"
 	"career-log-be/models/note/chat/enums"
 	"career-log-be/utils/response"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -27,6 +28,25 @@ func HandleCreateChat(c *fiber.Ctx) error {
 		return appErrors.NewBadRequestError(
 			"Invalid request body",
 			err.Error(),
+		)
+	}
+
+	// 오늘 생성한 채팅이 있는지 확인
+	now := time.Now()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	endOfDay := startOfDay.Add(24 * time.Hour)
+
+	var existingChat chat.ChatSet
+	if err := db.Where("user_id = ? AND created_at >= ? AND created_at < ?", userID, startOfDay, endOfDay).First(&existingChat).Error; err == nil {
+		return appErrors.NewBadRequestError(
+			appErrors.ErrorCodeInvalidInput,
+			"Daily chat limit exceeded",
+		)
+	} else if err != gorm.ErrRecordNotFound {
+		return appErrors.NewInternalError(
+			appErrors.ErrorCodeDatabaseError,
+			"Failed to check existing chat",
+			err,
 		)
 	}
 
