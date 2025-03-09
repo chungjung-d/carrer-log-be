@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"career-log-be/models/note/chat/enums"
 	"career-log-be/utils"
 	"time"
 )
@@ -10,10 +11,10 @@ const (
 )
 
 type Message struct {
-	ID        string    `json:"id"`
-	Role      string    `json:"role"`
-	Content   string    `json:"content"`
-	Timestamp time.Time `json:"timestamp"`
+	ID        string            `json:"id"`
+	Role      enums.MessageRole `json:"role"`
+	Content   string            `json:"content"`
+	Timestamp time.Time         `json:"timestamp"`
 }
 
 type ChatMetadata struct {
@@ -39,7 +40,7 @@ func NewChatData() ChatData {
 }
 
 // NewMessage creates a new message with generated ID
-func NewMessage(role, content string) Message {
+func NewMessage(role enums.MessageRole, content string) Message {
 	return Message{
 		ID:        utils.GenerateID(MessagePrefix),
 		Role:      role,
@@ -49,7 +50,7 @@ func NewMessage(role, content string) Message {
 }
 
 // AddMessage adds a new message to ChatData and updates metadata
-func (cd *ChatData) AddMessage(role, content string) {
+func (cd *ChatData) AddMessage(role enums.MessageRole, content string) {
 	message := NewMessage(role, content)
 	cd.Messages = append(cd.Messages, message)
 	cd.Metadata.MessageCount++
