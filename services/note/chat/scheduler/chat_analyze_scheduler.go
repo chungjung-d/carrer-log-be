@@ -122,9 +122,8 @@ func (cs *ChatAnalyzeScheduler) analyzeChat(ctx context.Context, chatSet *chat.C
 
 // NewChatAnalyzeScheduler 새로운 ChatAnalyzeScheduler 인스턴스를 생성합니다
 func NewChatAnalyzeScheduler(db *gorm.DB) (*ChatAnalyzeScheduler, error) {
-	chatGPTService, err := chatgpt.NewChatGPTBuilder().
-		WithModel("gpt-4o-mini-2024-07-18").
-		Build()
+	chatGPTService, err := chatgpt.NewChatGPTBuilder().Build()
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ChatGPT service: %v", err)
 	}

@@ -16,6 +16,6 @@ type ChatGPTConfig struct {
 func DefaultConfig() *ChatGPTConfig {
 	return &ChatGPTConfig{
 		APIKey: os.Getenv("OPENAI_API_KEY"),
-		Model:  openai.GPT3Dot5Turbo,
+		Model:  openai.GPT4oMini,
 	}
 }
