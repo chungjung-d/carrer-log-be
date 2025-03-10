@@ -107,12 +107,12 @@ func (cs *ChatAnalyzeScheduler) analyzeChat(ctx context.Context, chatSet *chat.C
 	event := &job_satisfaction.JobSatisfactionUpdateEvent{
 		UserID:            chatSet.UserID,
 		EventType:         enums.ChatAnalysisEvent,
-		Workload:          int(analysis.Workload),
-		Compensation:      int(analysis.Compensation),
-		Growth:            int(analysis.Growth),
-		WorkEnvironment:   int(analysis.WorkEnvironment),
-		WorkRelationships: int(analysis.WorkRelationships),
-		WorkValues:        int(analysis.WorkValues),
+		Workload:          analysis.Workload,
+		Compensation:      analysis.Compensation,
+		Growth:            analysis.Growth,
+		WorkEnvironment:   analysis.WorkEnvironment,
+		WorkRelationships: analysis.WorkRelationships,
+		WorkValues:        analysis.WorkValues,
 		SourceId:          &chatSet.ID,
 		CreatedAt:         time.Now().In(kst),
 	}

@@ -12,12 +12,12 @@ import (
 )
 
 type CreateJobSatisfactionImportanceInput struct {
-	Workload          int `json:"workload" validate:"required,min=0,max=100"`
-	Compensation      int `json:"compensation" validate:"required,min=0,max=100"`
-	Growth            int `json:"growth" validate:"required,min=0,max=100"`
-	WorkEnvironment   int `json:"workEnvironment" validate:"required,min=0,max=100"`
-	WorkRelationships int `json:"workRelationships" validate:"required,min=0,max=100"`
-	WorkValues        int `json:"workValues" validate:"required,min=0,max=100"`
+	Workload          float64 `json:"workload" validate:"required,min=0,max=100"`
+	Compensation      float64 `json:"compensation" validate:"required,min=0,max=100"`
+	Growth            float64 `json:"growth" validate:"required,min=0,max=100"`
+	WorkEnvironment   float64 `json:"workEnvironment" validate:"required,min=0,max=100"`
+	WorkRelationships float64 `json:"workRelationships" validate:"required,min=0,max=100"`
+	WorkValues        float64 `json:"workValues" validate:"required,min=0,max=100"`
 }
 
 func HandleCreateJobSatisfactionImportance() fiber.Handler {

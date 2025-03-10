@@ -18,14 +18,15 @@ type JobSatisfactionUpdateEvent struct {
 	ID                string                               `json:"id" gorm:"primaryKey;not null"`
 	UserID            string                               `json:"userId" gorm:"index;not null"`
 	EventType         enums.JobSatisfactionUpdateEventType `json:"eventType" gorm:"type:varchar(20);not null"`
-	Workload          int                                  `json:"workload" gorm:"not null"` // 변화량 (양수 또는 음수)
-	Compensation      int                                  `json:"compensation" gorm:"not null"`
-	Growth            int                                  `json:"growth" gorm:"not null"`
-	WorkEnvironment   int                                  `json:"workEnvironment" gorm:"column:work_environment;not null"`
-	WorkRelationships int                                  `json:"workRelationships" gorm:"column:work_relationships;not null"`
-	WorkValues        int                                  `json:"workValues" gorm:"column:work_values;not null"`
+	Workload          float64                              `json:"workload" gorm:"check:workload >= 0 AND workload <= 100;not null"`
+	Compensation      float64                              `json:"compensation" gorm:"check:compensation >= 0 AND compensation <= 100;not null"`
+	Growth            float64                              `json:"growth" gorm:"check:growth >= 0 AND growth <= 100;not null"`
+	WorkEnvironment   float64                              `json:"workEnvironment" gorm:"check:work_environment >= 0 AND work_environment <= 100;column:work_environment;not null"`
+	WorkRelationships float64                              `json:"workRelationships" gorm:"check:work_relationships >= 0 AND work_relationships <= 100;column:work_relationships;not null"`
+	WorkValues        float64                              `json:"workValues" gorm:"check:work_values >= 0 AND work_values <= 100;column:work_values;not null"`
 	SourceId          *string                              `json:"sourceId"` // 참조 ID (S3에 저장된 대화 내용 참조), nullable
 	CreatedAt         time.Time                            `json:"createdAt" gorm:"not null"`
+	UpdatedAt         time.Time                            `json:"updatedAt" gorm:"not null"`
 }
 
 func (u *JobSatisfactionUpdateEvent) BeforeCreate(tx *gorm.DB) (err error) {

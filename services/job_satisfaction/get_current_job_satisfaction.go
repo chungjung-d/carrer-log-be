@@ -11,19 +11,19 @@ import (
 )
 
 type CurrentJobSatisfactionResponse struct {
-	Workload          int `json:"workload"`
-	Compensation      int `json:"compensation"`
-	Growth            int `json:"growth"`
-	WorkEnvironment   int `json:"workEnvironment"`
-	WorkRelationships int `json:"workRelationships"`
-	WorkValues        int `json:"workValues"`
+	Workload          float64 `json:"workload"`
+	Compensation      float64 `json:"compensation"`
+	Growth            float64 `json:"growth"`
+	WorkEnvironment   float64 `json:"workEnvironment"`
+	WorkRelationships float64 `json:"workRelationships"`
+	WorkValues        float64 `json:"workValues"`
 
-	WorkloadImportance          int `json:"workloadImportance"`
-	CompensationImportance      int `json:"compensationImportance"`
-	GrowthImportance            int `json:"growthImportance"`
-	WorkEnvironmentImportance   int `json:"workEnvironmentImportance"`
-	WorkRelationshipsImportance int `json:"workRelationshipsImportance"`
-	WorkValuesImportance        int `json:"workValuesImportance"`
+	WorkloadImportance          float64 `json:"workloadImportance"`
+	CompensationImportance      float64 `json:"compensationImportance"`
+	GrowthImportance            float64 `json:"growthImportance"`
+	WorkEnvironmentImportance   float64 `json:"workEnvironmentImportance"`
+	WorkRelationshipsImportance float64 `json:"workRelationshipsImportance"`
+	WorkValuesImportance        float64 `json:"workValuesImportance"`
 
 	Score float64 `json:"score"`
 }

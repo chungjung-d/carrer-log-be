@@ -11,7 +11,7 @@ import (
 )
 
 // ConstrainRange는 값이 0-100 범위를 벗어나지 않도록 제한합니다.
-func ConstrainRange(value int) int {
+func ConstrainRange(value float64) float64 {
 	if value < 0 {
 		return 0
 	}
