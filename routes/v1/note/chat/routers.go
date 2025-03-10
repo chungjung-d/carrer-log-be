@@ -22,4 +22,7 @@ func SetupRoutes(router fiber.Router) {
 
 	// Stream chat messages
 	protected.Post("/:id/stream", chat.HandleStreamChat)
+
+	// Analyze daily chat manually (Scheduler Test API)
+	protected.Post("/analyze-daily", chat.HandleAnalyzeDailyChat)
 }

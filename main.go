@@ -2,6 +2,7 @@ package main
 
 import (
 	"career-log-be/config/database"
+	"career-log-be/config/scheduler"
 	"career-log-be/middleware"
 	job_satisfaction "career-log-be/models/job_satisfaction"
 	"career-log-be/models/note/chat"
@@ -69,6 +70,11 @@ func initialize() (*fiber.App, *AppContext, error) {
 
 	// 라우터 설정
 	routes.SetupRoutes(app)
+
+	// 스케줄러 초기화
+	if err := scheduler.InitSchedulers(app, db); err != nil {
+		return nil, nil, fmt.Errorf("could not initialize schedulers: %v", err)
+	}
 
 	return app, appCtx, nil
 }

@@ -143,7 +143,7 @@ func NewChatAnalyzeScheduler(db *gorm.DB) (*ChatAnalyzeScheduler, error) {
 // Start 스케줄러를 시작합니다
 func (cs *ChatAnalyzeScheduler) Start() {
 	// 매일 오전 7시(UTC 기준)에 실행
-	_, err := cs.scheduler.Every(1).Day().At("07:00").Do(cs.resetDailyChatCount)
+	_, err := cs.scheduler.Every(1).Day().At("07:00").Do(cs.AnalyzeDailyChat)
 	if err != nil {
 		log.Printf("Failed to schedule daily chat count reset: %v", err)
 	}
@@ -156,8 +156,7 @@ func (cs *ChatAnalyzeScheduler) Stop() {
 	cs.scheduler.Stop()
 }
 
-// resetDailyChatCount 일일 채팅 카운트를 초기화하고 분석을 수행하는 작업
-func (cs *ChatAnalyzeScheduler) resetDailyChatCount() {
+func (cs *ChatAnalyzeScheduler) AnalyzeDailyChat() {
 	kst, _ := time.LoadLocation("Asia/Seoul")
 	now := time.Now().In(kst)
 	// 전날 오전 6시부터
