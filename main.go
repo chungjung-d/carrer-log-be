@@ -8,6 +8,7 @@ import (
 	"career-log-be/models/note/chat"
 	user "career-log-be/models/user"
 	"career-log-be/routes"
+	"career-log-be/utils/chatgpt"
 	"career-log-be/utils/jwt"
 	"fmt"
 	"log"
@@ -33,6 +34,12 @@ func initialize() (*fiber.App, *AppContext, error) {
 
 	// JWT 유틸리티 초기화
 	jwtUtils := jwt.NewJWTUtils()
+
+	// ChatGPT 서비스 초기화
+	chatGPTService, err := chatgpt.NewChatGPTBuilder().Build()
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not initialize ChatGPT service: %v", err)
+	}
 
 	// 데이터베이스 설정 및 연결
 	dbConfig := database.NewConfig()
@@ -68,6 +75,7 @@ func initialize() (*fiber.App, *AppContext, error) {
 	// 미들웨어 설정
 	app.Use(middleware.DatabaseMiddleware(db))
 	app.Use(middleware.JWTMiddleware(jwtUtils))
+	app.Use(middleware.ChatGPTMiddleware(chatGPTService))
 
 	// 라우터 설정
 	routes.SetupRoutes(app)

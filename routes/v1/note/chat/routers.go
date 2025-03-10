@@ -20,12 +20,12 @@ func SetupRoutes(router fiber.Router) {
 	// Create new chat
 	protected.Post("/create", chat.HandleCreateChat)
 
+	// Analyze daily chat manually (Scheduler Test API)
+	protected.Post("/analyze-daily", chat.HandleAnalyzeDailyChat)
+
 	// Get chat by ID
 	protected.Get("/:id", chat.HandleGetChat)
 
 	// Stream chat messages
-	protected.Post("/:id/stream", chat.HandleStreamChat)
-
-	// Analyze daily chat manually (Scheduler Test API)
-	protected.Post("/analyze-daily", chat.HandleAnalyzeDailyChat)
+	protected.Post("/:id", chat.HandleChat)
 }

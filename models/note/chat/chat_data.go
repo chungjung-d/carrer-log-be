@@ -3,6 +3,9 @@ package chat
 import (
 	"career-log-be/models/note/chat/enums"
 	"career-log-be/utils"
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -55,4 +58,23 @@ func (cd *ChatData) AddMessage(role enums.MessageRole, content string) {
 	cd.Messages = append(cd.Messages, message)
 	cd.Metadata.MessageCount++
 	cd.Metadata.LastMessageAt = message.Timestamp
+}
+
+// Scan implements the sql.Scanner interface
+func (cd *ChatData) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("expected []byte, got %T", value)
+	}
+
+	return json.Unmarshal(bytes, cd)
+}
+
+// Value implements the driver.Valuer interface
+func (cd ChatData) Value() (driver.Value, error) {
+	return json.Marshal(cd)
 }

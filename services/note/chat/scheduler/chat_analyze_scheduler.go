@@ -9,12 +9,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"time"
 
 	"github.com/go-co-op/gocron"
 	"github.com/gofiber/fiber/v2"
 	"github.com/sashabaranov/go-openai"
 	"gorm.io/gorm"
+
+	satisfaction_event "career-log-be/services/job_satisfaction/core/event"
 )
 
 type ChatAnalyzeScheduler struct {
@@ -107,17 +110,21 @@ func (cs *ChatAnalyzeScheduler) analyzeChat(ctx context.Context, chatSet *chat.C
 	event := &job_satisfaction.JobSatisfactionUpdateEvent{
 		UserID:            chatSet.UserID,
 		EventType:         enums.ChatAnalysisEvent,
-		Workload:          analysis.Workload,
-		Compensation:      analysis.Compensation,
-		Growth:            analysis.Growth,
-		WorkEnvironment:   analysis.WorkEnvironment,
-		WorkRelationships: analysis.WorkRelationships,
-		WorkValues:        analysis.WorkValues,
+		Workload:          cs.normalizeScore(analysis.Workload),
+		Compensation:      cs.normalizeScore(analysis.Compensation),
+		Growth:            cs.normalizeScore(analysis.Growth),
+		WorkEnvironment:   cs.normalizeScore(analysis.WorkEnvironment),
+		WorkRelationships: cs.normalizeScore(analysis.WorkRelationships),
+		WorkValues:        cs.normalizeScore(analysis.WorkValues),
 		SourceId:          &chatSet.ID,
 		CreatedAt:         time.Now().In(kst),
 	}
 
 	return event, nil
+}
+
+func (cs *ChatAnalyzeScheduler) normalizeScore(score float64) float64 {
+	return math.Pow(score, 3) / 1000
 }
 
 // NewChatAnalyzeScheduler 새로운 ChatAnalyzeScheduler 인스턴스를 생성합니다
@@ -142,8 +149,8 @@ func NewChatAnalyzeScheduler(db *gorm.DB) (*ChatAnalyzeScheduler, error) {
 
 // Start 스케줄러를 시작합니다
 func (cs *ChatAnalyzeScheduler) Start() {
-	// 매일 오전 7시(UTC 기준)에 실행
-	_, err := cs.scheduler.Every(1).Day().At("07:00").Do(cs.AnalyzeDailyChat)
+	// 매일 오전 12시 30분(자정 이후 30분)에 실행
+	_, err := cs.scheduler.Every(1).Day().At("00:30").Do(cs.AnalyzeDailyChat)
 	if err != nil {
 		log.Printf("Failed to schedule daily chat count reset: %v", err)
 	}
@@ -159,9 +166,9 @@ func (cs *ChatAnalyzeScheduler) Stop() {
 func (cs *ChatAnalyzeScheduler) AnalyzeDailyChat() {
 	kst, _ := time.LoadLocation("Asia/Seoul")
 	now := time.Now().In(kst)
-	// 전날 오전 6시부터
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, kst).AddDate(0, 0, -1)
-	// 당일 오전 6시까지
+	// 전날 자정부터
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, kst).AddDate(0, 0, -1)
+	// 당일 자정까지
 	endOfDay := startOfDay.Add(24 * time.Hour)
 
 	// 해당 기간의 ChatSet 조회
@@ -179,10 +186,8 @@ func (cs *ChatAnalyzeScheduler) AnalyzeDailyChat() {
 		}
 
 		// DB에 저장
-		if err := cs.db.Create(event).Error; err != nil {
-			log.Printf("Failed to save analysis result for chat %s: %v", chatSet.ID, err)
-			continue
-		}
+
+		satisfaction_event.PublishJobSatisfactionUpdateEvent(cs.db, event)
 
 		log.Printf("Successfully analyzed and saved result for chat %s", chatSet.ID)
 	}
