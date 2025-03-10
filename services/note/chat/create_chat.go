@@ -32,8 +32,12 @@ func HandleCreateChat(c *fiber.Ctx) error {
 	}
 
 	// 오늘 생성한 채팅이 있는지 확인
-	now := time.Now()
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	kst, _ := time.LoadLocation("Asia/Seoul")
+	now := time.Now().In(kst)
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, kst)
+	if now.Hour() < 6 {
+		startOfDay = startOfDay.AddDate(0, 0, -1) // 6시 이전이면 전날 오전 6시부터로 계산
+	}
 	endOfDay := startOfDay.Add(24 * time.Hour)
 
 	var existingChat chat.ChatSet
@@ -77,6 +81,7 @@ func HandleCreateChat(c *fiber.Ctx) error {
 				},
 			},
 		},
+		CreatedAt: time.Now().In(kst),
 	}
 
 	// DB에 저장

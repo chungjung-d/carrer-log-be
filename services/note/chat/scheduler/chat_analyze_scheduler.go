@@ -103,6 +103,7 @@ func (cs *ChatAnalyzeScheduler) analyzeChat(ctx context.Context, chatSet *chat.C
 	}
 
 	// JobSatisfactionUpdateEvent 생성
+	kst, _ := time.LoadLocation("Asia/Seoul")
 	event := &job_satisfaction.JobSatisfactionUpdateEvent{
 		UserID:            chatSet.UserID,
 		EventType:         enums.ChatAnalysisEvent,
@@ -113,7 +114,7 @@ func (cs *ChatAnalyzeScheduler) analyzeChat(ctx context.Context, chatSet *chat.C
 		WorkRelationships: int(analysis.WorkRelationships),
 		WorkValues:        int(analysis.WorkValues),
 		SourceId:          &chatSet.ID,
-		CreatedAt:         time.Now(),
+		CreatedAt:         time.Now().In(kst),
 	}
 
 	return event, nil
@@ -128,8 +129,13 @@ func NewChatAnalyzeScheduler(db *gorm.DB) (*ChatAnalyzeScheduler, error) {
 		return nil, fmt.Errorf("failed to create ChatGPT service: %v", err)
 	}
 
+	kst, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load KST timezone: %v", err)
+	}
+
 	return &ChatAnalyzeScheduler{
-		scheduler: gocron.NewScheduler(time.UTC),
+		scheduler: gocron.NewScheduler(kst),
 		db:        db,
 		chatGPT:   chatGPTService,
 	}, nil
@@ -137,8 +143,8 @@ func NewChatAnalyzeScheduler(db *gorm.DB) (*ChatAnalyzeScheduler, error) {
 
 // Start 스케줄러를 시작합니다
 func (cs *ChatAnalyzeScheduler) Start() {
-	// 매일 자정(UTC 기준)에 실행
-	_, err := cs.scheduler.Every(1).Day().At("00:00").Do(cs.resetDailyChatCount)
+	// 매일 오전 7시(UTC 기준)에 실행
+	_, err := cs.scheduler.Every(1).Day().At("07:00").Do(cs.resetDailyChatCount)
 	if err != nil {
 		log.Printf("Failed to schedule daily chat count reset: %v", err)
 	}
@@ -153,11 +159,14 @@ func (cs *ChatAnalyzeScheduler) Stop() {
 
 // resetDailyChatCount 일일 채팅 카운트를 초기화하고 분석을 수행하는 작업
 func (cs *ChatAnalyzeScheduler) resetDailyChatCount() {
-	now := time.Now()
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	kst, _ := time.LoadLocation("Asia/Seoul")
+	now := time.Now().In(kst)
+	// 전날 오전 6시부터
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, kst).AddDate(0, 0, -1)
+	// 당일 오전 6시까지
 	endOfDay := startOfDay.Add(24 * time.Hour)
 
-	// 오늘의 ChatSet 조회
+	// 해당 기간의 ChatSet 조회
 	var chatSets []chat.ChatSet
 	if err := cs.db.Where("created_at >= ? AND created_at < ?", startOfDay, endOfDay).Find(&chatSets).Error; err != nil {
 		log.Printf("Failed to retrieve chat sets: %v", err)

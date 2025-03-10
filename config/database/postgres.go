@@ -53,6 +53,9 @@ func NewDatabase(config Config) (*gorm.DB, error) {
 	// 데이터베이스 연결
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: gormLogger,
+		NowFunc: func() time.Time {
+			return time.Now().In(time.FixedZone("KST", 9*60*60))
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
