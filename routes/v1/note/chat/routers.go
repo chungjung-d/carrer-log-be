@@ -14,6 +14,9 @@ func SetupRoutes(router fiber.Router) {
 	// Get all pre-chats
 	protected.Get("/pre-chats", chat.HandleListPreChats)
 
+	// Create new pre-chat
+	protected.Post("/pre-chats", chat.HandleCreatePreChat)
+
 	// Create new chat
 	protected.Post("/create", chat.HandleCreateChat)
 

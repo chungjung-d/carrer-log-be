@@ -49,6 +49,7 @@ func initialize() (*fiber.App, *AppContext, error) {
 		&job_satisfaction.UserJobSatisfaction{},
 		&job_satisfaction.JobSatisfactionUpdateEvent{},
 		&chat.ChatSet{},
+		&chat.PreChat{},
 	); err != nil {
 		return nil, nil, fmt.Errorf("could not migrate database: %v", err)
 	}

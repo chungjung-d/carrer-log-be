@@ -21,7 +21,7 @@ type CreateChatResponse struct {
 
 func HandleCreateChat(c *fiber.Ctx) error {
 	db := c.Locals("db").(*gorm.DB)
-	userID := c.Locals("user_id").(string)
+	userID := c.Locals("userID").(string)
 
 	var req CreateChatRequest
 	if err := c.BodyParser(&req); err != nil {
