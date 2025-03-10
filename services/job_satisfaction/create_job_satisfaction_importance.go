@@ -45,7 +45,7 @@ func HandleCreateJobSatisfactionImportance() fiber.Handler {
 
 		// 이미 직무 만족도 중요도가 존재하는지 확인
 		var existingImportance job_satisfaction.UserJobSatisfactionImportance
-		result := db.Where("id = ?", userID).First(&existingImportance)
+		result := db.Where("user_id = ?", userID).First(&existingImportance)
 		if result.Error == nil {
 			return appErrors.NewBadRequestError(
 				appErrors.ErrorCodeResourceExists,
