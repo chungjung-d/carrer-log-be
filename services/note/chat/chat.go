@@ -6,6 +6,7 @@ import (
 	"career-log-be/models/note/chat/enums"
 	"career-log-be/utils/chatgpt"
 	"context"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sashabaranov/go-openai"
@@ -50,6 +51,19 @@ func HandleChat(c *fiber.Ctx) error {
 			appErrors.ErrorCodeDatabaseError,
 			"Failed to retrieve chat",
 			result.Error,
+		)
+	}
+
+	// 채팅이 금일 자정을 넘지 않았는지 확인
+	kst, _ := time.LoadLocation("Asia/Seoul")
+	now := time.Now().In(kst)
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, kst)
+	endOfDay := startOfDay.Add(24 * time.Hour)
+
+	if chatSet.CreatedAt.Before(startOfDay) || chatSet.CreatedAt.After(endOfDay) {
+		return appErrors.NewBadRequestError(
+			appErrors.ErrorCodeInvalidInput,
+			"Chat is not available after midnight",
 		)
 	}
 
