@@ -14,7 +14,6 @@ var validate = validator.New()
 
 type CreateUserProfileInput struct {
 	Name         string `json:"name" validate:"required"`
-	Nickname     string `json:"nickname" validate:"required"`
 	Organization string `json:"organization" validate:"required"`
 }
 
@@ -61,7 +60,7 @@ func HandleCreateUserProfile() fiber.Handler {
 		userProfile := user.UserProfile{
 			ID:           userID,
 			Name:         input.Name,
-			Nickname:     input.Nickname,
+			Nickname:     input.Name,
 			Organization: input.Organization,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),

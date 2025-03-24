@@ -29,6 +29,15 @@ func HandleChat(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(string)
 	chatID := c.Params("id")
 
+	var userName string
+	db.Where("id = ?", userID).Select("name").First(&userName)
+	if userName == "" {
+		return appErrors.NewBadRequestError(
+			appErrors.ErrorCodeInvalidInput,
+			"User name not found",
+		)
+	}
+
 	var req ChatRequest
 	if err := c.BodyParser(&req); err != nil {
 		return appErrors.NewBadRequestError(
@@ -74,7 +83,7 @@ func HandleChat(c *fiber.Ctx) error {
 	messages := []openai.ChatCompletionMessage{
 		{
 			Role:    "system",
-			Content: getChatPrompt(),
+			Content: getChatPrompt(userName),
 		},
 	}
 
@@ -113,7 +122,7 @@ func HandleChat(c *fiber.Ctx) error {
 	})
 }
 
-func getChatPrompt() string {
+func getChatPrompt(userName string) string {
 	return `
 	당신은 내담자의 상담사 역할을 합니다.
 
@@ -122,7 +131,7 @@ func getChatPrompt() string {
 
 	당신은 다음과 같은 목표를 가지고 있습니다.
 	1. 내담자의 이야기를 잘 들어주고 공감하는 것
-	2. 내잠자의 현재 상황을 더 잘 이해할 수 있도록 질문하는 것
+	2. 내담자의 현재 상황을 더 잘 이해할 수 있도록 질문하는 것
 
 	질문으로 인해 얻으려는 정보는 다음과 같습니다.
 	1. workload: 업무량과 업무에서의 성취감
@@ -138,7 +147,7 @@ func getChatPrompt() string {
 	마지막 내용이, 내담자가 당신에게 한 말이므로, 당신은 그에 대해서 답변을 하거나 공감을 하거나 질문을 이어나가야 합니다.
 	중요한 것은 자연스럽게 이어나가야 하며, 내담자가 이만 종료하고 싶다고 하면 종료해야 합니다.
 
-	내담자를 부르는 호칭은 "당신" 이라고 부르세요. 다만 굳이 부르지 않아도 되는 경우는 부르지 않아도 됩니다.
+	내담자를 부르는 호칭은 "${userName}"님 이라고 부르세요. 다만 굳이 부르지 않아도 되는 경우는 부르지 않아도 됩니다.
 	
 	내담자의 이야기는 다음과 같습니다.
 	`
