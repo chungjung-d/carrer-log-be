@@ -27,5 +27,5 @@ func SetupRoutes(router fiber.Router) {
 	protected.Get("/:id", chat.HandleGetChat)
 
 	// Stream chat messages
-	protected.Post("/:id", chat.HandleChat)
+	protected.Get("/:id/stream", chat.HandleChat)
 }

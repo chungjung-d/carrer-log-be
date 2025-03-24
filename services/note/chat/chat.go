@@ -4,15 +4,15 @@ import (
 	appErrors "career-log-be/errors"
 	"career-log-be/models/note/chat"
 	"career-log-be/models/note/chat/enums"
+	"career-log-be/models/user"
 	"career-log-be/utils/chatgpt"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/sashabaranov/go-openai"
 	"gorm.io/gorm"
-
-	res "career-log-be/utils/response"
 )
 
 type ChatRequest struct {
@@ -28,21 +28,20 @@ func HandleChat(c *fiber.Ctx) error {
 	chatGPTService := c.Locals("chatgpt").(*chatgpt.Service)
 	userID := c.Locals("userID").(string)
 	chatID := c.Params("id")
+	message := c.Query("message")
 
-	var userName string
-	db.Where("id = ?", userID).Select("name").First(&userName)
-	if userName == "" {
+	if message == "" {
 		return appErrors.NewBadRequestError(
-			appErrors.ErrorCodeInvalidInput,
-			"User name not found",
+			"Invalid request",
+			"Message is required",
 		)
 	}
 
-	var req ChatRequest
-	if err := c.BodyParser(&req); err != nil {
+	var userProfile user.UserProfile
+	if err := db.Where("id = ?", userID).First(&userProfile).Error; err != nil {
 		return appErrors.NewBadRequestError(
-			"Invalid request body",
-			err.Error(),
+			appErrors.ErrorCodeInvalidInput,
+			"User profile not found",
 		)
 	}
 
@@ -76,14 +75,20 @@ func HandleChat(c *fiber.Ctx) error {
 		)
 	}
 
+	// SSE 설정
+	c.Set("Content-Type", "text/event-stream")
+	c.Set("Cache-Control", "no-cache")
+	c.Set("Connection", "keep-alive")
+	c.Set("Transfer-Encoding", "chunked")
+
 	// 사용자 메시지 추가
-	chatSet.ChatData.AddMessage(enums.UserRole, req.Message)
+	chatSet.ChatData.AddMessage(enums.UserRole, message)
 
 	// ChatGPT 메시지 준비
 	messages := []openai.ChatCompletionMessage{
 		{
 			Role:    "system",
-			Content: getChatPrompt(userName),
+			Content: getChatPrompt(userProfile.Name),
 		},
 	}
 
@@ -95,31 +100,57 @@ func HandleChat(c *fiber.Ctx) error {
 		})
 	}
 
-	// ChatGPT API 호출
-	response, err := chatGPTService.CompleteChatRequest(context.Background(), messages)
-	if err != nil {
-		return appErrors.NewInternalError(
-			"CHATGPT_ERROR",
-			"Failed to get response from ChatGPT",
-			err,
-		)
+	// ChatGPT 스트리밍 응답 처리
+	responseChan, errChan := chatGPTService.StreamChatRequest(context.Background(), messages)
+
+	// 전체 응답을 저장할 변수
+	var fullResponse string
+
+	// 스트리밍 응답 전송
+	for {
+		select {
+		case chunk, ok := <-responseChan:
+			if !ok {
+				// 스트리밍 완료
+				chatSet.ChatData.AddMessage(enums.AssistantRole, fullResponse)
+
+				// DB 업데이트
+				if err := db.Save(&chatSet).Error; err != nil {
+					return appErrors.NewInternalError(
+						appErrors.ErrorCodeDatabaseError,
+						"Failed to save chat",
+						err,
+					)
+				}
+
+				// [DONE] 메시지 전송
+				if _, err := c.Write([]byte("data: [DONE]\n\n")); err != nil {
+					return err
+				}
+				return nil
+			}
+
+			if chunk != "" {
+				fullResponse += chunk
+				// 클라이언트에 청크 전송
+				if _, err := c.Write([]byte(fmt.Sprintf("data: %s\n\n", chunk))); err != nil {
+					return appErrors.NewInternalError(
+						"STREAM_ERROR",
+						"Failed to send chunk",
+						fmt.Errorf("error details: %w", err),
+					)
+				}
+			}
+		case err := <-errChan:
+			if err != nil {
+				return appErrors.NewInternalError(
+					"CHATGPT_ERROR",
+					"Failed to get response from ChatGPT",
+					fmt.Errorf("error details: %w", err),
+				)
+			}
+		}
 	}
-
-	// Assistant 메시지 추가
-	chatSet.ChatData.AddMessage(enums.AssistantRole, response)
-
-	// DB 업데이트
-	if err := db.Save(&chatSet).Error; err != nil {
-		return appErrors.NewInternalError(
-			appErrors.ErrorCodeDatabaseError,
-			"Failed to save chat",
-			err,
-		)
-	}
-
-	return res.Created(c, ChatResponse{
-		Content: response,
-	})
 }
 
 func getChatPrompt(userName string) string {

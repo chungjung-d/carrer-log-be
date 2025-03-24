@@ -89,9 +89,11 @@ func (s *ChatGPTService) StreamChatRequest(ctx context.Context, messages []opena
 				return
 			}
 
-			if len(response.Choices) > 0 {
-				responseChan <- response.Choices[0].Delta.Content
+			if len(response.Choices) > 0 && response.Choices[0].Delta.Content != "" {
+				content := response.Choices[0].Delta.Content
+				responseChan <- content
 			}
+
 		}
 	}()
 

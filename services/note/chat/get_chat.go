@@ -21,7 +21,7 @@ type GetChatResponse struct {
 func HandleGetChat(c *fiber.Ctx) error {
 	db := c.Locals("db").(*gorm.DB)
 	chatID := c.Params("id")
-	userID := c.Locals("user_id").(string)
+	userID := c.Locals("userID").(string)
 
 	var chatSet chat.ChatSet
 	result := db.Where("id = ? AND user_id = ?", chatID, userID).First(&chatSet)
